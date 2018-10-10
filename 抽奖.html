@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="renderer" content="webkit">
+  <title>学码思年会</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="js/jquery.min.js"></script>
+  <!-- <script src='js/test.js'></script> -->
+</head>
+<body>
+  <div class="wrap">
+    <div class="prize_con">
+      <!-- <p class='title'>学码思年会抽奖活动正式开始</p> -->
+      <p class="prize_grade">
+        <!-- <span>开始抽奖</span> -->
+        <img src="images/logo1.png" width="250" alt="" /></p>
+      <div class="prize_list vetically">
+        <ul>
+          <li></li>
+        </ul>
+      </div>
+      <p class="start">
+        <img src="images/btn.png" width=100%>
+      </p>
+      <div class="mask">
+        <ul class="prize_set">
+          <li class="set_grade">
+            <select id="set_grade">
+              <option>选择奖项</option>
+              <option>一等奖</option>
+              <option>二等奖</option>
+              <option>三等奖</option>
+              <option>四等奖</option>
+            </select>
+          </li>
+          <li class='prize_num'>
+            <p><span>请选择奖项</span></p>
+            <ul class='people'>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <input type="hidden" value="0" id="prize_btn">
+  <script>
+     var arr=[], //总数组
+          count=200,//总人数
+          index,//记录生成的随机数对象
+          num=0,//达到中奖人数则停止生成随机数
+          i=1; //判断当前点击操作,是暂停还是开始
+
+          //1.循环遍历总人数,把总人数放入总数组保存,可扩展
+          for (var r = 1; r <= count; r++) {
+            arr.push(r); //[1,2,3,......,200]
+          };
+          //2.选择奖项,生成下拉菜单-利用change事件  option的值:this.value
+          $('#set_grade').change(function(){
+            // 当option值变化时
+            switch(this.value){
+              case '选择奖项':
+              // $('.prize_num p span').html('请选择奖项');
+              geneLi(0,'请选择奖项');
+               break;
+              case '一等奖':   //生成li 追加至ul
+                geneLi(2,'一等奖,共2名')
+              break;
+              case '二等奖':  geneLi(4,'二等奖,共4名');break;
+              case '三等奖':   geneLi(5,'三等奖,共5名');break;
+              case '四等奖':   geneLi(10,'四等奖,共10名');break;
+              default: 
+              $('.people').html('请选择奖项');  
+              $('.prize_num p span').html(''); 
+            }
+          })
+
+          //3.生成li 追加至ul
+          function geneLi(n,str){
+            num = 0;
+            $('.people').html('');  //清除之前生成的li
+            $('.prize_num p span').html(str); //设置文本提示框
+            for (var i = 0; i < n; i++) {
+              var li=$('<li></li>'); 
+              $('.people').append(li);   //追加新生成的li
+            };
+             $('.prize_list ul li').html(''); //重新开奖时,奖池的号码清空
+              if($('.start').css('display')=== 'none'){
+                $('.start').css('display','block');
+               }
+          }
+          
+          //4.生成随机数
+          function randomNum(){
+            var rn=Math.floor(Math.random()*arr.length);
+            return {    //函数内部返回一个对象 ******绝招
+                arrNum:arr[rn],
+                num:rn
+            }
+          }
+
+          //5.点击开始抽奖事件
+          $('.start').click(function(){
+            //5.1初始化定时器
+            if (i!==2) {
+              var timer=null;
+              var sind=document.getElementById('set_grade').selectedIndex;
+              if (sind===0) {     //5.3.
+                alert('请选择选项')    //5.4.
+                return; 
+              };
+              $('.start img').attr('src','./images/btn_stop.png');      
+              //边界问题(极限问题)的处理
+              if (arr.length===0) {
+                clearInterval(timer);
+                return;
+              };
+            };
+            //5.5点击开始抽奖时,开始按钮变暂停
+            //调用抽奖的方式:init  
+            init(function (index) {  //回调函数  记录数保存在li         
+              var listli=$('.people li');   //1.获取li的个数
+              for (var r = 0; r < listli.length; r++) { //2.遍历li的个数,给每个li赋值抽中的数
+                if (num===r) {                          //3.(判断num===i) 给相应的li赋值
+                  listli[num].innerHTML=index;
+                  break;
+                };
+              };
+              num++;
+              if (num===listli.length) {
+                $('.start').css('display', 'none');
+              };
+            })
+          })
+
+          //5.6初始化抽奖 ----核心方法*******
+          function init(fn){
+            console.log(i)
+              if (i%2!==0) {  //判断当前点击是开始还是暂停
+                  //5.6.1 点击按钮时,反复产生随机数,再次点击暂停
+                      //开始时,定时器开始工作,暂停清除计时器
+                  //5.6.2 定义计时器,反复产生随机数,30ms
+                    //5.6.3 调用randomNum, 并赋值给index
+                    //5.6.4 并把index.arrNum显示在中奖池中
+                i++;
+                timer=setInterval(function(){
+                  index=randomNum();
+                  $('.prize_list ul li').html(index.arrNum)
+                }, 30);
+              }else{
+                clearInterval(timer);//1.清除计时器
+                arr.splice(index.num,1);//2.把生成的随机数在原数组中删除
+                fn(index.arrNum);//3.回调,传入随机数
+                i=1;//4.i=1;
+                $('.start img').attr('src', './images/btn.png');
+              }
+   
+       
+          }
+
+  </script>
+</body>
+</html>
